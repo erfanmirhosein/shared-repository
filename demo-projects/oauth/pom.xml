@@ -31,12 +31,13 @@
 	</properties>
 	<dependencies>
 	
+	<!-- ui department -->
 		<dependency>
 			<groupId>org.joinfaces</groupId>
 			<artifactId>primefaces-spring-boot-starter</artifactId>
 			<version>5.3.1</version>
 		</dependency>
-
+	<!-- OAuth related -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-oauth2-client</artifactId>
@@ -45,6 +46,7 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
+	<!-- test dependencies, mvc and lombok -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
