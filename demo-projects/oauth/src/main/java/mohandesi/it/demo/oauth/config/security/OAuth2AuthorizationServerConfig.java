@@ -61,6 +61,8 @@ public class OAuth2AuthorizationServerConfig {
                 exceptionHandlingCustomizer -> exceptionHandlingCustomizer
                         .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login")));
 
+        // http://localhost:8080/oauth2/authorize?response_type=code&client_id=client1_id&redirect_uri=http://localhost:8080/oauth2/code&scope=openid
+
         return http.build();
     }
 
@@ -105,7 +107,7 @@ public class OAuth2AuthorizationServerConfig {
                 .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .clientName("UI client")
-                .redirectUri("http://localhost:8080/oauth2/code")
+                .redirectUri("http://localhost:8080/oauth2/code/authzcode.xhtml")
                 .scope(OidcScopes.OPENID)
                 .build();
 
