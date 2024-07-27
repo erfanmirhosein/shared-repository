@@ -20,6 +20,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.User.UserBuilder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
@@ -32,6 +33,7 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
@@ -54,7 +56,10 @@ public class OAuth2AuthorizationServerConfig {
                 });
 
         http.exceptionHandling(
-                exceptionHandlingCustomizer -> exceptionHandlingCustomizer.accessDeniedPage("/login.xhtml"));
+                // exceptionHandlingCustomizer ->
+                // exceptionHandlingCustomizer.accessDeniedPage("/menu.xhtml"));
+                exceptionHandlingCustomizer -> exceptionHandlingCustomizer
+                        .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login")));
 
         return http.build();
     }
@@ -68,6 +73,10 @@ public class OAuth2AuthorizationServerConfig {
 
         http.authorizeHttpRequests(
                 authorizeHttpRequestsCustomizer -> authorizeHttpRequestsCustomizer.anyRequest().authenticated());
+        // authorizeHttpRequestsCustomizer ->
+        // authorizeHttpRequestsCustomizer.anyRequest().permitAll());
+
+        http.csrf(csrfCustomizer -> csrfCustomizer.disable());
 
         return http.build();
     }
@@ -96,7 +105,7 @@ public class OAuth2AuthorizationServerConfig {
                 .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .clientName("UI client")
-                .redirectUri("http://localhost:8080/index.xhtml")
+                .redirectUri("http://localhost:8080/oauth2/code")
                 .scope(OidcScopes.OPENID)
                 .build();
 

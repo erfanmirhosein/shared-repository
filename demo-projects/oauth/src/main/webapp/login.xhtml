@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html
+  xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:h="http://xmlns.jcp.org/jsf/html"
+  xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+  xmlns:f="http://xmlns.jcp.org/jsf/core"
+  xmlns:p="http://primefaces.org/ui"
+>
+  <f:view>
+    <h:head>
+      <meta charset="utf-8" />
+      <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <title>Prime Faces Demo</title>
+    </h:head>
+    <h:body>
+      <h:form>
+        <div class="card">
+          <h5>Enter Your Credentials</h5>
+          <div class="ui-fluid formgrid grid">
+            <div class="field col">
+              <p:outputLabel for="firstname2" value="Firstname" />
+              <p:inputText id="firstname2" />
+            </div>
+            <div class="field col">
+              <p:outputLabel for="lastname2" value="Lastname" />
+              <p:inputText id="lastname2" />
+            </div>
+            <p:button class="field col" value="Submit" />
+          </div>
+        </div>
+      </h:form>
+    </h:body>
+  </f:view>
+</html>
