@@ -30,6 +30,7 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
+import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
@@ -61,8 +62,6 @@ public class OAuth2AuthorizationServerConfig {
                 exceptionHandlingCustomizer -> exceptionHandlingCustomizer
                         .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login")));
 
-        // http://localhost:8080/oauth2/authorize?response_type=code&client_id=client1_id&redirect_uri=http://localhost:8080/oauth2/code&scope=openid
-
         return http.build();
     }
 
@@ -75,8 +74,6 @@ public class OAuth2AuthorizationServerConfig {
 
         http.authorizeHttpRequests(
                 authorizeHttpRequestsCustomizer -> authorizeHttpRequestsCustomizer.anyRequest().authenticated());
-        // authorizeHttpRequestsCustomizer ->
-        // authorizeHttpRequestsCustomizer.anyRequest().permitAll());
 
         http.csrf(csrfCustomizer -> csrfCustomizer.disable());
 
@@ -101,17 +98,29 @@ public class OAuth2AuthorizationServerConfig {
 
         RegisteredClient registeredClient1 = RegisteredClient.withId(UUID.randomUUID().toString())
                 .clientId("client1_id")
-                .clientSecret("client1_password")
-                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                .clientSecret("client1_secret")
+                // .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
                 .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-                .clientName("UI client")
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
+                .clientName("private client")
                 .redirectUri("http://localhost:8080/oauth2/code/authzcode.xhtml")
                 .scope(OidcScopes.OPENID)
                 .build();
+        RegisteredClient registeredClient2 = RegisteredClient.withId(UUID.randomUUID().toString())
+                .clientId("client2_id")
+                .clientSecret("client2_secret")
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+                // .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+                .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
+                .clientName("public client")
+                .redirectUri("http://localhost:8080/oauth2/code/authzcode.xhtml")
+                .scope(OidcScopes.OPENID)
+                .clientSettings(ClientSettings.builder().requireProofKey(true).build())
+                .build();
 
-        return new InMemoryRegisteredClientRepository(registeredClient1);
+        return new InMemoryRegisteredClientRepository(registeredClient1, registeredClient2);
     }
 
     @Bean
