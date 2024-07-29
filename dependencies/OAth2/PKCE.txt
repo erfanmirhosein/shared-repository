@@ -1,0 +1,10 @@
+SHA-256
+
+Code Verifier: 
+2CdRtnCO2BhXFYff449BHqz4jyKPEUJn7HrGbVN5MEaGjufUSffUXHHODmRS1O6R9GtNAryEKPIzu3gi6O5L1THsCmKW3SXSWUsjUerLY99psqayKvG7ZENis896e8mW
+
+Code Challenge:
+A_ZkpuEX0MZoUlHk_Ns7CjLbNhTOn-iW7fOhayQu73g
+
+code challenge method:
+S256
