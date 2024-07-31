@@ -5,7 +5,11 @@ import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.primefaces.component.password.Password;
@@ -14,6 +18,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -24,6 +30,7 @@ import org.springframework.security.oauth2.client.web.DefaultOAuth2Authorization
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
@@ -31,6 +38,8 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
+import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
@@ -56,9 +65,8 @@ public class OAuth2AuthorizationServerConfig {
                 .oidc(oidCustomizer -> {
                 });
 
+        // redirecting unauthenticated requests to /oauth2 endpoints to the login page
         http.exceptionHandling(
-                // exceptionHandlingCustomizer ->
-                // exceptionHandlingCustomizer.accessDeniedPage("/menu.xhtml"));
                 exceptionHandlingCustomizer -> exceptionHandlingCustomizer
                         .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login")));
 
@@ -73,7 +81,9 @@ public class OAuth2AuthorizationServerConfig {
         });
 
         http.authorizeHttpRequests(
-                authorizeHttpRequestsCustomizer -> authorizeHttpRequestsCustomizer.anyRequest().authenticated());
+                authorizeHttpRequestsCustomizer -> authorizeHttpRequestsCustomizer
+                        .requestMatchers("/login.xhtml").permitAll()
+                        .anyRequest().authenticated());
 
         http.csrf(csrfCustomizer -> csrfCustomizer.disable());
 
@@ -81,11 +91,48 @@ public class OAuth2AuthorizationServerConfig {
     }
 
     @Bean
+    public OAuth2TokenCustomizer<JwtEncodingContext> jwtTokenCustomizer() {
+        return (context) -> {
+            if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
+
+                // sleep on the next line for a bit// you can use the AuthorityUtils class'
+                // static methods
+                Set<GrantedAuthority> principalGrantedAuthorities = new HashSet<>(
+                        context.getPrincipal().getAuthorities());
+
+                Set<String> principalRoles = new HashSet<>();
+                Set<String> principalAuthorities = new HashSet<>();
+
+                for (GrantedAuthority ga : principalGrantedAuthorities) {
+
+                    String grantedAuthorityString = ga.getAuthority();
+                    if (grantedAuthorityString.startsWith("ROLE_")) {
+                        principalRoles.add(grantedAuthorityString);
+                    } else {
+                        principalAuthorities.add(grantedAuthorityString);
+                    }
+
+                }
+
+                Map<String, Set<String>> realmAccess = new HashMap<>();
+                realmAccess.put("roles", principalRoles);
+                realmAccess.put("authorities", principalAuthorities);
+
+                context.getClaims().claims((claims) -> {
+                    claims.put("real-access", realmAccess);
+                });
+            }
+        };
+    }
+
+    @Bean
     public UserDetailsService userDetailsService() {
 
-        UserDetails user1 = User.withUsername("user1").password("password1").build();
+        UserDetails user1 = User.withUsername("admin").password("admin").authorities("ROLE_ADMIN", "DELETE_USER")
+                .build();
+        UserDetails user2 = User.withUsername("user").password("user").authorities("ROLE_USER", "BORROW_BOOK").build();
 
-        return new InMemoryUserDetailsManager(user1);
+        return new InMemoryUserDetailsManager(user1, user2);
     }
 
     @Bean
