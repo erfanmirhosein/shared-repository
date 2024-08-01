@@ -50,6 +50,8 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 
+import ch.qos.logback.core.util.StringUtil;
+
 @Configuration
 public class OAuth2AuthorizationServerConfig {
 
@@ -100,26 +102,30 @@ public class OAuth2AuthorizationServerConfig {
                 Set<GrantedAuthority> principalGrantedAuthorities = new HashSet<>(
                         context.getPrincipal().getAuthorities());
 
-                Set<String> principalRoles = new HashSet<>();
-                Set<String> principalAuthorities = new HashSet<>();
+                // Set<String> principalRoles = new HashSet<>();
+                // Set<String> principalAuthorities = new HashSet<>();
+
+                Set<String> realmAccess = new HashSet<>();
 
                 for (GrantedAuthority ga : principalGrantedAuthorities) {
 
                     String grantedAuthorityString = ga.getAuthority();
-                    if (grantedAuthorityString.startsWith("ROLE_")) {
-                        principalRoles.add(grantedAuthorityString);
-                    } else {
-                        principalAuthorities.add(grantedAuthorityString);
-                    }
+                    realmAccess.add(grantedAuthorityString);
+
+                    // if (grantedAuthorityString.startsWith("ROLE_")) {
+                    // principalRoles.add(grantedAuthorityString);
+                    // } else {
+                    // principalAuthorities.add(grantedAuthorityString);
+                    // }
 
                 }
 
-                Map<String, Set<String>> realmAccess = new HashMap<>();
-                realmAccess.put("roles", principalRoles);
-                realmAccess.put("authorities", principalAuthorities);
+                // Map<String, Set<String>> realmAccess = new HashMap<>();
+                // realmAccess.put("roles", principalRoles);
+                // realmAccess.put("authorities", principalAuthorities);
 
                 context.getClaims().claims((claims) -> {
-                    claims.put("real-access", realmAccess);
+                    claims.put("realm-access", realmAccess);
                 });
             }
         };
