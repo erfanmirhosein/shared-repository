@@ -5,6 +5,7 @@ import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -17,6 +18,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -38,7 +40,10 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
+import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
+import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenClaimsContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.provisioning.UserDetailsManager;
@@ -49,6 +54,9 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+
+import static mohandesi.it.demo.oauth.config.security.CheckAuthoritiesOAuth2TokenIntrospectionAuthenticationProvider.getAuthorizationService;
+import static mohandesi.it.demo.oauth.config.security.CheckAuthoritiesOAuth2TokenIntrospectionAuthenticationProvider.getRegisteredClientRepository;
 
 import ch.qos.logback.core.util.StringUtil;
 
@@ -64,8 +72,18 @@ public class OAuth2AuthorizationServerConfig {
 
         // enabling Open Id Connect
         http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
-                .oidc(oidCustomizer -> {
-                });
+                .oidc(oidCustomizer -> oidCustomizer.userInfoEndpoint(userInfoEndpoint -> {
+                }))
+                .tokenIntrospectionEndpoint(tokenIntrospectionEndpoint -> tokenIntrospectionEndpoint
+                        .authenticationProvider(new CheckAuthoritiesOAuth2TokenIntrospectionAuthenticationProvider(
+                                getRegisteredClientRepository(http),
+                                getAuthorizationService(http)))
+                        .authenticationProviders(providers -> {
+                            // AuthenticationProvider tmp = providers.get(0);
+                            // providers.set(0, providers.get(1));
+                            // providers.set(1, tmp);
+
+                        }));
 
         // redirecting unauthenticated requests to /oauth2 endpoints to the login page
         http.exceptionHandling(
@@ -93,17 +111,14 @@ public class OAuth2AuthorizationServerConfig {
     }
 
     @Bean
-    public OAuth2TokenCustomizer<JwtEncodingContext> jwtTokenCustomizer() {
-        return (context) -> {
+    public OAuth2TokenCustomizer<OAuth2TokenClaimsContext> opaqueTokenCustomizer() {
+        return context -> {
             if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
 
                 // sleep on the next line for a bit// you can use the AuthorityUtils class'
                 // static methods
                 Set<GrantedAuthority> principalGrantedAuthorities = new HashSet<>(
                         context.getPrincipal().getAuthorities());
-
-                // Set<String> principalRoles = new HashSet<>();
-                // Set<String> principalAuthorities = new HashSet<>();
 
                 Set<String> realmAccess = new HashSet<>();
 
@@ -112,19 +127,9 @@ public class OAuth2AuthorizationServerConfig {
                     String grantedAuthorityString = ga.getAuthority();
                     realmAccess.add(grantedAuthorityString);
 
-                    // if (grantedAuthorityString.startsWith("ROLE_")) {
-                    // principalRoles.add(grantedAuthorityString);
-                    // } else {
-                    // principalAuthorities.add(grantedAuthorityString);
-                    // }
-
                 }
 
-                // Map<String, Set<String>> realmAccess = new HashMap<>();
-                // realmAccess.put("roles", principalRoles);
-                // realmAccess.put("authorities", principalAuthorities);
-
-                context.getClaims().claims((claims) -> {
+                context.getClaims().claims(claims -> {
                     claims.put("realm-access", realmAccess);
                 });
             }
@@ -156,6 +161,8 @@ public class OAuth2AuthorizationServerConfig {
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
                 .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                .tokenSettings(TokenSettings.builder().accessTokenFormat(OAuth2TokenFormat.REFERENCE).build())
                 .clientName("private client")
                 .redirectUri("http://localhost:8080/oauth2/code/authzcode.xhtml")
                 .scope(OidcScopes.OPENID)
@@ -167,10 +174,12 @@ public class OAuth2AuthorizationServerConfig {
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
                 // .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .clientName("public client")
                 .redirectUri("http://localhost:8080/oauth2/code/authzcode.xhtml")
                 .scope(OidcScopes.OPENID)
                 .clientSettings(ClientSettings.builder().requireProofKey(true).build())
+                .tokenSettings(TokenSettings.builder().accessTokenFormat(OAuth2TokenFormat.REFERENCE).build())
                 .build();
 
         return new InMemoryRegisteredClientRepository(registeredClient1, registeredClient2);
