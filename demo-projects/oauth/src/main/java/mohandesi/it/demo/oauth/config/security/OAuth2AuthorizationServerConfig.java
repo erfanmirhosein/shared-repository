@@ -79,10 +79,9 @@ public class OAuth2AuthorizationServerConfig {
                                 getRegisteredClientRepository(http),
                                 getAuthorizationService(http)))
                         .authenticationProviders(providers -> {
-                            // AuthenticationProvider tmp = providers.get(0);
-                            // providers.set(0, providers.get(1));
-                            // providers.set(1, tmp);
-
+//                             AuthenticationProvider tmp = providers.get(0);
+//                             providers.set(0, providers.get(1));
+//                             providers.set(1, tmp);
                         }));
 
         // redirecting unauthenticated requests to /oauth2 endpoints to the login page

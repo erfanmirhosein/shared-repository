@@ -98,7 +98,7 @@ public class CheckAuthoritiesOAuth2TokenIntrospectionAuthenticationProvider impl
 
         }
 
-        return tokenIntrospectionAuthentication;
+        return null;
     }
 
     @Override
