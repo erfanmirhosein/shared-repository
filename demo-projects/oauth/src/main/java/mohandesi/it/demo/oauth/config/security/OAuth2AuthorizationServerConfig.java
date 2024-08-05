@@ -79,9 +79,9 @@ public class OAuth2AuthorizationServerConfig {
                                 getRegisteredClientRepository(http),
                                 getAuthorizationService(http)))
                         .authenticationProviders(providers -> {
-//                             AuthenticationProvider tmp = providers.get(0);
-//                             providers.set(0, providers.get(1));
-//                             providers.set(1, tmp);
+                            // AuthenticationProvider tmp = providers.get(0);
+                            // providers.set(0, providers.get(1));
+                            // providers.set(1, tmp);
                         }));
 
         // redirecting unauthenticated requests to /oauth2 endpoints to the login page
@@ -140,7 +140,8 @@ public class OAuth2AuthorizationServerConfig {
 
         UserDetails user1 = User.withUsername("admin").password("admin").authorities("ROLE_ADMIN", "DELETE_USER")
                 .build();
-        UserDetails user2 = User.withUsername("user").password("user").authorities("ROLE_USER", "BORROW_BOOK").build();
+        UserDetails user2 = User.withUsername("user").password("user")
+                .authorities("ROLE_USER", "BORROW_BOOK", "/user/hello").build();
 
         return new InMemoryUserDetailsManager(user1, user2);
     }

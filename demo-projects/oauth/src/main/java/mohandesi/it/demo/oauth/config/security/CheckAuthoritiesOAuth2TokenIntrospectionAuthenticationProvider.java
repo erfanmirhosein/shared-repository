@@ -72,21 +72,17 @@ public class CheckAuthoritiesOAuth2TokenIntrospectionAuthenticationProvider impl
         Map<String, Object> additionalParametersFromRequest = tokenIntrospectionAuthentication
                 .getAdditionalParameters();
 
-        if (additionalParametersFromRequest.get("realm-access") != null) {
+        if( additionalParametersFromRequest.get("realm-access") == null){
+            return new OAuth2TokenIntrospectionAuthenticationToken(tokenIntrospectionAuthentication.getToken(),
+                clientPrincipal, OAuth2TokenIntrospection.builder().build());
+        }
 
             // realm-access
             Map<String, Object> tokenClaims = authorizedToken.getClaims();
+            Set<String> realmAccessFromClaims = (Set) tokenClaims.get("realm-access");
 
             String realmAccessFromRequest = (String) additionalParametersFromRequest.get("realm-access");
 
-            Set<String> realmAccessFromClaims = (Set) tokenClaims.get("realm-access");
-            for (String string : realmAccessFromClaims) {
-
-                System.out.println(string);
-
-            }
-
-            if (realmAccessFromRequest instanceof String) {
 
                 if (!realmAccessFromClaims.contains(realmAccessFromRequest)) {
 
@@ -94,9 +90,8 @@ public class CheckAuthoritiesOAuth2TokenIntrospectionAuthenticationProvider impl
                             clientPrincipal, OAuth2TokenIntrospection.builder().build());
                 }
 
-            }
 
-        }
+
 
         return null;
     }
