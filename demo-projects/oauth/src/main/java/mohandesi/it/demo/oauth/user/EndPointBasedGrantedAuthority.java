@@ -17,8 +17,8 @@ public class EndPointBasedGrantedAuthority implements GrantedAuthority {
     resourceUrls.add("/user/hello");
     resourceEndPoints.put("resource9000",resourceUrls);
     globalAuthorities.put("ROLE_USER",resourceEndPoints);
-    resourceUrls.clear();
-    resourceEndPoints.clear();
+    resourceEndPoints = new HashMap<>();
+    resourceUrls = new HashSet<>();
     resourceUrls.add("/admin/hello");
     resourceEndPoints.put("resource9000",resourceUrls);
     globalAuthorities.put("ROLE_ADMIN",resourceEndPoints);
