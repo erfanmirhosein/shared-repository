@@ -14,6 +14,7 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
@@ -31,6 +32,8 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+
+import mohandesi.it.demo.oauth.user.EndPointBasedGrantedAuthority;
 
 public class CheckAuthoritiesOAuth2TokenIntrospectionAuthenticationProvider implements AuthenticationProvider {
 
@@ -79,21 +82,22 @@ public class CheckAuthoritiesOAuth2TokenIntrospectionAuthenticationProvider impl
 
             // realm-access
             Map<String, Object> tokenClaims = authorizedToken.getClaims();
-            Set<String> realmAccessFromClaims = (Set) tokenClaims.get("realm-access");
+            Set<GrantedAuthority> realmAccessFromClaims = (Set) tokenClaims.get("realm-access");
 
             String realmAccessFromRequest = (String) additionalParametersFromRequest.get("realm-access");
+            String requestingResourceServerId = clientPrincipal.getRegisteredClient().getClientId();
 
-
-                if (!realmAccessFromClaims.contains(realmAccessFromRequest)) {
-
-                    return new OAuth2TokenIntrospectionAuthenticationToken(tokenIntrospectionAuthentication.getToken(),
-                            clientPrincipal, OAuth2TokenIntrospection.builder().build());
+//        Map<String,Set<String>>
+            for (GrantedAuthority ga : realmAccessFromClaims ) {
+                Set<String> grantedUrls = ((EndPointBasedGrantedAuthority) ga).getEndPointBasedAuthorities().get(requestingResourceServerId);
+                if(grantedUrls != null && grantedUrls.contains(realmAccessFromRequest)){
+                    return null;
                 }
 
+            }
 
-
-
-        return null;
+        return new OAuth2TokenIntrospectionAuthenticationToken(tokenIntrospectionAuthentication.getToken(),
+            clientPrincipal, OAuth2TokenIntrospection.builder().build());
     }
 
     @Override

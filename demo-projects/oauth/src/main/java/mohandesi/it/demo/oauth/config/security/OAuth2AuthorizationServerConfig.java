@@ -59,6 +59,8 @@ import static mohandesi.it.demo.oauth.config.security.CheckAuthoritiesOAuth2Toke
 import static mohandesi.it.demo.oauth.config.security.CheckAuthoritiesOAuth2TokenIntrospectionAuthenticationProvider.getRegisteredClientRepository;
 
 import ch.qos.logback.core.util.StringUtil;
+import mohandesi.it.demo.oauth.user.EndPointBasedGrantedAuthority;
+import static mohandesi.it.demo.oauth.user.EndPointBasedGrantedAuthority.*;
 
 @Configuration
 public class OAuth2AuthorizationServerConfig {
@@ -109,31 +111,48 @@ public class OAuth2AuthorizationServerConfig {
         return http.build();
     }
 
+//    @Bean
+//    public OAuth2TokenCustomizer<OAuth2TokenClaimsContext> opaqueTokenCustomizer() {
+//        return context -> {
+//            if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
+//
+//                // sleep on the next line for a bit// you can use the AuthorityUtils class'
+//                // static methods
+//                Set<GrantedAuthority> principalGrantedAuthorities = new HashSet<>(
+//                        context.getPrincipal().getAuthorities());
+//
+//                Set<String> realmAccess = new HashSet<>();
+//
+//                for (GrantedAuthority ga : principalGrantedAuthorities) {
+//
+//                    String grantedAuthorityString = ga.getAuthority();
+//                    realmAccess.add(grantedAuthorityString);
+//
+//                }
+//
+//                context.getClaims().claims(claims -> {
+//                    claims.put("realm-access", realmAccess);
+//                });
+//            }
+//        };
+//    }
+
     @Bean
     public OAuth2TokenCustomizer<OAuth2TokenClaimsContext> opaqueTokenCustomizer() {
         return context -> {
             if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
 
-                // sleep on the next line for a bit// you can use the AuthorityUtils class'
-                // static methods
                 Set<GrantedAuthority> principalGrantedAuthorities = new HashSet<>(
-                        context.getPrincipal().getAuthorities());
-
-                Set<String> realmAccess = new HashSet<>();
-
-                for (GrantedAuthority ga : principalGrantedAuthorities) {
-
-                    String grantedAuthorityString = ga.getAuthority();
-                    realmAccess.add(grantedAuthorityString);
-
-                }
+                    context.getPrincipal().getAuthorities());
 
                 context.getClaims().claims(claims -> {
-                    claims.put("realm-access", realmAccess);
+                    claims.put("realm-access", principalGrantedAuthorities);
                 });
             }
         };
     }
+
+
 
     @Bean
     public UserDetailsService userDetailsService() {
@@ -143,7 +162,20 @@ public class OAuth2AuthorizationServerConfig {
         UserDetails user2 = User.withUsername("user").password("user")
                 .authorities("ROLE_USER", "BORROW_BOOK", "/user/hello").build();
 
-        return new InMemoryUserDetailsManager(user1, user2);
+        UserDetails admin9000 = User.withUsername("admin9000")
+            .password("admin9000")
+            .authorities(
+                new EndPointBasedGrantedAuthority("ROLE_ADMIN",
+                    EndPointBasedGrantedAuthority.getRoleEndPoints("ROLE_ADMIN")))
+                    .build();
+        UserDetails user9000 = User.withUsername("user9000")
+            .password("user9000")
+            .authorities(
+                new EndPointBasedGrantedAuthority("ROLE_USER",
+                    EndPointBasedGrantedAuthority.getRoleEndPoints("ROLE_USER")))
+            .build();
+
+        return new InMemoryUserDetailsManager(user1, user2, user9000, admin9000);
     }
 
     @Bean
@@ -181,8 +213,26 @@ public class OAuth2AuthorizationServerConfig {
                 .clientSettings(ClientSettings.builder().requireProofKey(true).build())
                 .tokenSettings(TokenSettings.builder().accessTokenFormat(OAuth2TokenFormat.REFERENCE).build())
                 .build();
+        RegisteredClient resourceServer9000 = RegisteredClient.withId(UUID.randomUUID().toString())
+                .clientId("resource9000")
+                .clientSecret("resource9000")
+                .clientName("resource9000")
+                .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
+                .tokenSettings(TokenSettings.builder().accessTokenFormat(OAuth2TokenFormat.REFERENCE).build())
+                .build();
+        RegisteredClient resourceServer9005 = RegisteredClient.withId(UUID.randomUUID().toString())
+            .clientId("resource9005")
+            .clientSecret("resource9005")
+            .clientName("resource9005")
+            .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+            .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+            .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
+            .tokenSettings(TokenSettings.builder().accessTokenFormat(OAuth2TokenFormat.REFERENCE).build())
+            .build();
 
-        return new InMemoryRegisteredClientRepository(registeredClient1, registeredClient2);
+        return new InMemoryRegisteredClientRepository(registeredClient1, registeredClient2, resourceServer9000);
     }
 
     @Bean
