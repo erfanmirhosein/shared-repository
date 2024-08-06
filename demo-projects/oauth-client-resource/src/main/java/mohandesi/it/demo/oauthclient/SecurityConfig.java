@@ -12,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
 import org.springframework.security.oauth2.server.resource.introspection.NimbusOpaqueTokenIntrospector;
 import org.springframework.security.oauth2.server.resource.introspection.OpaqueTokenIntrospector;
 import org.springframework.security.web.SecurityFilterChain;
@@ -34,12 +35,13 @@ public class SecurityConfig {
         return http.build();
     }
 
+    // should it be a bean???
     @Bean
     public OpaqueTokenIntrospector introspector(HttpServletRequest httpServletRequest) {
 
         String introspectionUri = "http://localhost:8080/oauth2/introspect";
-        String clientId = "client1_id";
-        String clientSecret = "client1_secret";
+        String clientId = "resource9000";
+        String clientSecret = "resource9000";
         NimbusOpaqueTokenIntrospector withAuthoritiesIntrospector = new NimbusOpaqueTokenIntrospector(introspectionUri,
                 clientId, clientSecret);
         withAuthoritiesIntrospector
