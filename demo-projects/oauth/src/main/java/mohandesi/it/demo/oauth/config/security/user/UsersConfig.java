@@ -33,14 +33,14 @@ public class UsersConfig {
             "admin9000",
             "admin9000",
             new UrlBasedGrantedAuthority(
-                "ROLE_ADMIN", UrlBasedGrantedAuthority.getRoleEndPoints("ROLE_ADMIN")));
+                UrlBasedGrantedAuthority.groupOfAccessPool.get("admin9000")));
 
     UserDetails user9000 =
         createUser(
             "user9000",
             "user9000",
             new UrlBasedGrantedAuthority(
-                "ROLE_USER", UrlBasedGrantedAuthority.getRoleEndPoints("ROLE_USER")));
+                UrlBasedGrantedAuthority.groupOfAccessPool.get("user9000")));
 
     return new UserDetails[] {user9000, admin9000};
   }
