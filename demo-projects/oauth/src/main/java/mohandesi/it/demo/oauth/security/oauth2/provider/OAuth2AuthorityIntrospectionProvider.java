@@ -1,8 +1,9 @@
-package mohandesi.it.demo.oauth.config.security.oauth2.provider;
+package mohandesi.it.demo.oauth.security.oauth2.provider;
 
 import java.util.Map;
 import java.util.Set;
-
+import mohandesi.it.demo.oauth.security.oauth2.authorities.Access;
+import mohandesi.it.demo.oauth.security.oauth2.authorities.UrlBasedGrantedAuthority;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -17,12 +18,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenIntrospection;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenIntrospectionAuthenticationToken;
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.util.Assert;
-
-import mohandesi.it.demo.oauth.config.security.authorities.Access;
-import mohandesi.it.demo.oauth.config.security.authorities.UrlBasedGrantedAuthority;
 
 public class OAuth2AuthorityIntrospectionProvider implements AuthenticationProvider {
 
@@ -31,16 +27,10 @@ public class OAuth2AuthorityIntrospectionProvider implements AuthenticationProvi
 
   private final Log logger = LogFactory.getLog(getClass());
 
-  private final RegisteredClientRepository registeredClientRepository;
-
   private final OAuth2AuthorizationService authorizationService;
 
-  public OAuth2AuthorityIntrospectionProvider(
-      RegisteredClientRepository registeredClientRepository,
-      OAuth2AuthorizationService authorizationService) {
-    Assert.notNull(registeredClientRepository, "registeredClientRepository cannot be null");
+  public OAuth2AuthorityIntrospectionProvider(OAuth2AuthorizationService authorizationService) {
     Assert.notNull(authorizationService, "authorizationService cannot be null");
-    this.registeredClientRepository = registeredClientRepository;
     this.authorizationService = authorizationService;
   }
 
@@ -51,6 +41,8 @@ public class OAuth2AuthorityIntrospectionProvider implements AuthenticationProvi
 
     OAuth2ClientAuthenticationToken clientPrincipal =
         getAuthenticatedClientElseThrowInvalidClient(tokenIntrospectionAuthentication);
+    // if clientPrincipal was going to be null an Exception would be thrown before the next line
+    String requestingResourceServerId = clientPrincipal.getRegisteredClient().getClientId();
 
     OAuth2Authorization authorization =
         this.authorizationService.findByToken(tokenIntrospectionAuthentication.getToken(), null);
@@ -73,12 +65,13 @@ public class OAuth2AuthorityIntrospectionProvider implements AuthenticationProvi
 
     Map<String, Object> tokenClaims = authorizedToken.getClaims();
     Assert.notNull(tokenClaims, "the claims of an authorized token should not be null");
+    @SuppressWarnings("unchecked")
     Set<GrantedAuthority> tokenGrantedAuthorities =
-        (Set) tokenClaims.get(GRANTED_AUTHORITIES_CLAIM_KEY);
+        (Set<GrantedAuthority>) tokenClaims.get(GRANTED_AUTHORITIES_CLAIM_KEY);
 
     Map<String, Object> additionalParametersFromRequest =
         tokenIntrospectionAuthentication.getAdditionalParameters();
-    String requestedUrl = null;
+    String requestedUrl;
     try {
       requestedUrl = (String) additionalParametersFromRequest.get(URL_FIELD_KEY_IN_REQUEST);
       Assert.notNull(
@@ -94,19 +87,22 @@ public class OAuth2AuthorityIntrospectionProvider implements AuthenticationProvi
           OAuth2TokenIntrospection.builder().build());
     }
 
-    RegisteredClient authorizedClient =
-        this.registeredClientRepository.findById(authorization.getRegisteredClientId());
-
-    String requestingResourceServerId = clientPrincipal.getRegisteredClient().getClientId();
-
     for (GrantedAuthority ga : tokenGrantedAuthorities) {
       Set<Access> tokenAccesses = ((UrlBasedGrantedAuthority) ga).getAccessGroup().getAccesses();
       for (Access access : tokenAccesses) {
         if (requestedUrl.equals(access.getUrl())
             && requestingResourceServerId.equals(access.getResourceServer())) {
+          if (this.logger.isTraceEnabled()) {
+            this.logger.trace("The end user's access to the requested url has been confirmed");
+          }
           return null;
         }
       }
+    }
+
+    if (this.logger.isTraceEnabled()) {
+      this.logger.trace(
+          "The end user does not have the access to the requested url so an active:false will be sent back");
     }
 
     return new OAuth2TokenIntrospectionAuthenticationToken(

@@ -1,4 +1,4 @@
-package mohandesi.it.demo.oauth.config.security.authorities;
+package mohandesi.it.demo.oauth.security.oauth2.authorities;
 
 import lombok.Builder;
 import lombok.EqualsAndHashCode;

@@ -1,9 +1,9 @@
-package mohandesi.it.demo.oauth.config.security.oauth2;
+package mohandesi.it.demo.oauth.security.oauth2;
 
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
+import mohandesi.it.demo.oauth.security.oauth2.provider.OAuth2AuthorityIntrospectionProvider;
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
@@ -16,7 +16,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
@@ -25,8 +24,6 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.util.StringUtils;
-
-import mohandesi.it.demo.oauth.config.security.oauth2.provider.OAuth2AuthorityIntrospectionProvider;
 
 @Configuration
 public class OAuth2SecurityConfig {
@@ -43,7 +40,6 @@ public class OAuth2SecurityConfig {
             tokenIntrospectionEndpoint ->
                 tokenIntrospectionEndpoint.authenticationProvider(
                     new OAuth2AuthorityIntrospectionProvider(
-                        OAuth2ConfigurerUtils.getRegisteredClientRepository(http),
                         OAuth2ConfigurerUtils.getAuthorizationService(http))));
 
     http.exceptionHandling(
@@ -74,7 +70,7 @@ public class OAuth2SecurityConfig {
     return AuthorizationServerSettings.builder().build();
   }
 
-  private abstract static class OAuth2ConfigurerUtils {
+  private static class OAuth2ConfigurerUtils {
     static OAuth2AuthorizationService getAuthorizationService(HttpSecurity httpSecurity) {
       OAuth2AuthorizationService authorizationService =
           httpSecurity.getSharedObject(OAuth2AuthorizationService.class);
@@ -86,20 +82,6 @@ public class OAuth2SecurityConfig {
         httpSecurity.setSharedObject(OAuth2AuthorizationService.class, authorizationService);
       }
       return authorizationService;
-    }
-
-    static RegisteredClientRepository getRegisteredClientRepository(HttpSecurity httpSecurity) {
-      RegisteredClientRepository registeredClientRepository =
-          httpSecurity.getSharedObject(RegisteredClientRepository.class);
-      if (registeredClientRepository == null) {
-        registeredClientRepository = getBean(httpSecurity, RegisteredClientRepository.class);
-        httpSecurity.setSharedObject(RegisteredClientRepository.class, registeredClientRepository);
-      }
-      return registeredClientRepository;
-    }
-
-    static <T> T getBean(HttpSecurity httpSecurity, Class<T> type) {
-      return httpSecurity.getSharedObject(ApplicationContext.class).getBean(type);
     }
 
     static <T> T getOptionalBean(HttpSecurity httpSecurity, Class<T> type) {

@@ -1,4 +1,4 @@
-package mohandesi.it.demo.oauth.config.security.client;
+package mohandesi.it.demo.oauth.security.oauth2.client;
 
 import java.util.UUID;
 

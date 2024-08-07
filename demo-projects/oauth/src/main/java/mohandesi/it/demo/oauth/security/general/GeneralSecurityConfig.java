@@ -1,4 +1,4 @@
-package mohandesi.it.demo.oauth.config.security.general;
+package mohandesi.it.demo.oauth.security.general;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

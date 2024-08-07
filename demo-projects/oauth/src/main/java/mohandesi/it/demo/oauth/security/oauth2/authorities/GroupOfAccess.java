@@ -1,4 +1,4 @@
-package mohandesi.it.demo.oauth.config.security.authorities;
+package mohandesi.it.demo.oauth.security.oauth2.authorities;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -28,6 +28,10 @@ public class GroupOfAccess {
   public Set<Access> getAccesses() {
     return this.accesses;
   }
+
+  // the next two methods could most likely be done better but this is just a demo so...will addAll
+  // entirely fail when
+  // one of the additions already exists in the initial set??
 
   public void addAccesses(Access... accesses) {
     for (Access a : accesses) {
