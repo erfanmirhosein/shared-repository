@@ -20,10 +20,7 @@ public class UsersConfig {
   private static UserDetails createUser(
       String userName, String password, GrantedAuthority... grantedAuthorities) {
 
-    UserDetails newUser =
-        User.withUsername(userName).password(password).authorities(grantedAuthorities).build();
-
-    return newUser;
+    return User.withUsername(userName).password(password).authorities(grantedAuthorities).build();
   }
 
   private static UserDetails[] createDummyUsers() {
