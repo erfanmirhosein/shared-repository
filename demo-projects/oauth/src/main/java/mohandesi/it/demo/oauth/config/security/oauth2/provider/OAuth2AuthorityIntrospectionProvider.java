@@ -1,7 +1,5 @@
 package mohandesi.it.demo.oauth.config.security.oauth2.provider;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -11,6 +9,8 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
@@ -19,7 +19,10 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenIntrospectionAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.util.CollectionUtils;
+import org.springframework.util.Assert;
+
+import mohandesi.it.demo.oauth.config.security.authorities.Access;
+import mohandesi.it.demo.oauth.config.security.authorities.UrlBasedGrantedAuthority;
 
 public class OAuth2AuthorityIntrospectionProvider implements AuthenticationProvider {
 
@@ -35,6 +38,8 @@ public class OAuth2AuthorityIntrospectionProvider implements AuthenticationProvi
   public OAuth2AuthorityIntrospectionProvider(
       RegisteredClientRepository registeredClientRepository,
       OAuth2AuthorizationService authorizationService) {
+    Assert.notNull(registeredClientRepository, "registeredClientRepository cannot be null");
+    Assert.notNull(authorizationService, "authorizationService cannot be null");
     this.registeredClientRepository = registeredClientRepository;
     this.authorizationService = authorizationService;
   }
@@ -50,51 +55,57 @@ public class OAuth2AuthorityIntrospectionProvider implements AuthenticationProvi
     OAuth2Authorization authorization =
         this.authorizationService.findByToken(tokenIntrospectionAuthentication.getToken(), null);
     if (authorization == null) {
+      if (this.logger.isTraceEnabled()) {
+        this.logger.trace(
+            "Did not authenticate token introspection request since token was not found");
+      }
       return tokenIntrospectionAuthentication;
+    }
+
+    if (this.logger.isTraceEnabled()) {
+      this.logger.trace("Retrieved authorization with token");
     }
 
     OAuth2Authorization.Token<OAuth2Token> authorizedToken =
         authorization.getToken(tokenIntrospectionAuthentication.getToken());
+    // get to this after the revocation process has been configured
+    Assert.notNull(authorizedToken, "the claims of an authorized token should not be null");
 
-
-    try{
-
-    }catch (){
-
-    }
-
-    RegisteredClient authorizedClient =
-        this.registeredClientRepository.findById(authorization.getRegisteredClientId());
+    Map<String, Object> tokenClaims = authorizedToken.getClaims();
+    Assert.notNull(tokenClaims, "the claims of an authorized token should not be null");
+    Set<GrantedAuthority> tokenGrantedAuthorities =
+        (Set) tokenClaims.get(GRANTED_AUTHORITIES_CLAIM_KEY);
 
     Map<String, Object> additionalParametersFromRequest =
         tokenIntrospectionAuthentication.getAdditionalParameters();
-
-    if (additionalParametersFromRequest.get(URL_FIELD_KEY_IN_REQUEST) == null) {
+    String requestedUrl = null;
+    try {
+      requestedUrl = (String) additionalParametersFromRequest.get(URL_FIELD_KEY_IN_REQUEST);
+      Assert.notNull(
+          requestedUrl, "the requested url should be included in the introspection request");
+    } catch (NullPointerException | ClassCastException | IllegalArgumentException e) {
+      if (this.logger.isTraceEnabled()) {
+        this.logger.trace(
+            "The resource should send the requested url as a key-value with one single value(requested-url:urlString) but it has violated this so it will receive an active:false");
+      }
       return new OAuth2TokenIntrospectionAuthenticationToken(
           tokenIntrospectionAuthentication.getToken(),
           clientPrincipal,
           OAuth2TokenIntrospection.builder().build());
     }
 
-    String realmAccessFromRequest =
-        (String) additionalParametersFromRequest.get(URL_FIELD_KEY_IN_REQUEST);
+    RegisteredClient authorizedClient =
+        this.registeredClientRepository.findById(authorization.getRegisteredClientId());
 
-    Set<GrantedAuthority> grantedAuthoritiesFromTokenClaims = Collections.emptySet();
-    if (tokenClaims.get(GRANTED_AUTHORITIES_CLAIM_KEY) instanceof Set)
-      grantedAuthoritiesFromTokenClaims = (Set) tokenClaims.get(GRANTED_AUTHORITIES_CLAIM_KEY);
-
-    String realmAccessFromRequest =
-        (String) additionalParametersFromRequest.get(GRANTED_AUTHORITIES_CLAIM_KEY);
     String requestingResourceServerId = clientPrincipal.getRegisteredClient().getClientId();
 
-    //        Map<String,Set<String>>
-    for (GrantedAuthority ga : realmAccessFromClaims) {
-      Set<String> grantedUrls =
-          ((EndPointBasedGrantedAuthority) ga)
-              .getEndPointBasedAuthorities()
-              .get(requestingResourceServerId);
-      if (grantedUrls != null && grantedUrls.contains(realmAccessFromRequest)) {
-        return null;
+    for (GrantedAuthority ga : tokenGrantedAuthorities) {
+      Set<Access> tokenAccesses = ((UrlBasedGrantedAuthority) ga).getAccessGroup().getAccesses();
+      for (Access access : tokenAccesses) {
+        if (requestedUrl.equals(access.getUrl())
+            && requestingResourceServerId.equals(access.getResourceServer())) {
+          return null;
+        }
       }
     }
 
@@ -107,116 +118,6 @@ public class OAuth2AuthorityIntrospectionProvider implements AuthenticationProvi
   @Override
   public boolean supports(Class<?> authentication) {
     return OAuth2TokenIntrospectionAuthenticationToken.class.isAssignableFrom(authentication);
-  }
-
-  private static OAuth2TokenIntrospection withActiveTokenClaims(
-      OAuth2Authorization.Token<OAuth2Token> authorizedToken, RegisteredClient authorizedClient) {
-
-    OAuth2TokenIntrospection.Builder tokenClaims;
-    if (!CollectionUtils.isEmpty(authorizedToken.getClaims())) {
-      Map<String, Object> claims = convertClaimsIfNecessary(authorizedToken.getClaims());
-      tokenClaims = OAuth2TokenIntrospection.withClaims(claims).active(true);
-    } else {
-      tokenClaims = OAuth2TokenIntrospection.builder(true);
-    }
-
-    tokenClaims.clientId(authorizedClient.getClientId());
-
-    // TODO Set "username"
-
-    OAuth2Token token = authorizedToken.getToken();
-    if (token.getIssuedAt() != null) {
-      tokenClaims.issuedAt(token.getIssuedAt());
-    }
-    if (token.getExpiresAt() != null) {
-      tokenClaims.expiresAt(token.getExpiresAt());
-    }
-
-    if (OAuth2AccessToken.class.isAssignableFrom(token.getClass())) {
-      OAuth2AccessToken accessToken = (OAuth2AccessToken) token;
-      tokenClaims.tokenType(accessToken.getTokenType().getValue());
-    }
-
-    return tokenClaims.build();
-  }
-
-  private static Map<String, Object> convertClaimsIfNecessary(Map<String, Object> claims) {
-    Map<String, Object> convertedClaims = new HashMap<>(claims);
-
-    Object value = claims.get(OAuth2TokenIntrospectionClaimNames.ISS);
-    if (value != null && !(value instanceof URL)) {
-      URL convertedValue = ClaimConversionService.getSharedInstance().convert(value, URL.class);
-      if (convertedValue != null) {
-        convertedClaims.put(OAuth2TokenIntrospectionClaimNames.ISS, convertedValue);
-      }
-    }
-
-    value = claims.get(OAuth2TokenIntrospectionClaimNames.SCOPE);
-    if (value != null && !(value instanceof List)) {
-      Object convertedValue =
-          ClaimConversionService.getSharedInstance()
-              .convert(value, OBJECT_TYPE_DESCRIPTOR, LIST_STRING_TYPE_DESCRIPTOR);
-      if (convertedValue != null) {
-        convertedClaims.put(OAuth2TokenIntrospectionClaimNames.SCOPE, convertedValue);
-      }
-    }
-
-    value = claims.get(OAuth2TokenIntrospectionClaimNames.AUD);
-    if (value != null && !(value instanceof List)) {
-      Object convertedValue =
-          ClaimConversionService.getSharedInstance()
-              .convert(value, OBJECT_TYPE_DESCRIPTOR, LIST_STRING_TYPE_DESCRIPTOR);
-      if (convertedValue != null) {
-        convertedClaims.put(OAuth2TokenIntrospectionClaimNames.AUD, convertedValue);
-      }
-    }
-
-    return convertedClaims;
-  }
-
-  static OAuth2AuthorizationService getAuthorizationService(HttpSecurity httpSecurity) {
-    OAuth2AuthorizationService authorizationService =
-        httpSecurity.getSharedObject(OAuth2AuthorizationService.class);
-    if (authorizationService == null) {
-      authorizationService = getOptionalBean(httpSecurity, OAuth2AuthorizationService.class);
-      if (authorizationService == null) {
-        authorizationService = new InMemoryOAuth2AuthorizationService();
-      }
-      httpSecurity.setSharedObject(OAuth2AuthorizationService.class, authorizationService);
-    }
-    return authorizationService;
-  }
-
-  static RegisteredClientRepository getRegisteredClientRepository(HttpSecurity httpSecurity) {
-    RegisteredClientRepository registeredClientRepository =
-        httpSecurity.getSharedObject(RegisteredClientRepository.class);
-    if (registeredClientRepository == null) {
-      registeredClientRepository = getBean(httpSecurity, RegisteredClientRepository.class);
-      httpSecurity.setSharedObject(RegisteredClientRepository.class, registeredClientRepository);
-    }
-    return registeredClientRepository;
-  }
-
-  static <T> T getBean(HttpSecurity httpSecurity, Class<T> type) {
-    return httpSecurity.getSharedObject(ApplicationContext.class).getBean(type);
-  }
-
-  static <T> T getOptionalBean(HttpSecurity httpSecurity, Class<T> type) {
-    Map<String, T> beansMap =
-        BeanFactoryUtils.beansOfTypeIncludingAncestors(
-            httpSecurity.getSharedObject(ApplicationContext.class), type);
-    if (beansMap.size() > 1) {
-      throw new NoUniqueBeanDefinitionException(
-          type,
-          beansMap.size(),
-          "Expected single matching bean of type '"
-              + type.getName()
-              + "' but found "
-              + beansMap.size()
-              + ": "
-              + StringUtils.collectionToCommaDelimitedString(beansMap.keySet()));
-    }
-    return (!beansMap.isEmpty() ? beansMap.values().iterator().next() : null);
   }
 
   static OAuth2ClientAuthenticationToken getAuthenticatedClientElseThrowInvalidClient(

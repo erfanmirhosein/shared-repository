@@ -40,8 +40,8 @@ public class SecurityConfig {
     public OpaqueTokenIntrospector introspector(HttpServletRequest httpServletRequest) {
 
         String introspectionUri = "http://localhost:8080/oauth2/introspect";
-        String clientId = "resource9000";
-        String clientSecret = "resource9000";
+        String clientId = "9000";
+        String clientSecret = "9000";
         NimbusOpaqueTokenIntrospector withAuthoritiesIntrospector = new NimbusOpaqueTokenIntrospector(introspectionUri,
                 clientId, clientSecret);
         withAuthoritiesIntrospector
@@ -90,7 +90,7 @@ public class SecurityConfig {
         private MultiValueMap<String, String> requestBody(String token) {
             MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
             body.add("token", token);
-            body.add("realm-access", httpServletRequest.getServletPath());
+            body.add("requested-url", httpServletRequest.getServletPath());
             return body;
         }
 

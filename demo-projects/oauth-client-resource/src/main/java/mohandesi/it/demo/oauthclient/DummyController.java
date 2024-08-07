@@ -16,4 +16,9 @@ public class DummyController {
         return new String("hello to the user");
     }
 
+    @GetMapping("/open")
+    public String helloEeryBody() {
+        return new String("hello to everybody");
+    }
+
 }

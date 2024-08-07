@@ -72,217 +72,230 @@
 // @Configuration
 // public class OAuth2AuthorizationServerConfig {
 //
-//    @Bean
-//    @Order(Ordered.HIGHEST_PRECEDENCE)
-//    public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http)
-//            throws Exception {
+//  @Bean
+//  @Order(Ordered.HIGHEST_PRECEDENCE)
+//  public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http)
+//      throws Exception {
 //
-//        OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+//    OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
 //
-//        // enabling Open Id Connect
-//        http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
-//                .oidc(oidCustomizer -> oidCustomizer.userInfoEndpoint(userInfoEndpoint -> {
-//                }))
-//                .tokenIntrospectionEndpoint(tokenIntrospectionEndpoint ->
-// tokenIntrospectionEndpoint
-//                        .authenticationProvider(new
-// CheckAuthoritiesOAuth2TokenIntrospectionAuthenticationProvider(
-//                                getRegisteredClientRepository(http),
-//                                getAuthorizationService(http)))
-//                        .authenticationProviders(providers -> {
-//                            // AuthenticationProvider tmp = providers.get(0);
-//                            // providers.set(0, providers.get(1));
-//                            // providers.set(1, tmp);
+//    // enabling Open Id Connect
+//    http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
+//        .oidc(oidCustomizer -> oidCustomizer.userInfoEndpoint(userInfoEndpoint -> {}))
+//        .tokenIntrospectionEndpoint(
+//            tokenIntrospectionEndpoint ->
+//                tokenIntrospectionEndpoint
+//                    .authenticationProvider(
+//                        new CheckAuthoritiesOAuth2TokenIntrospectionAuthenticationProvider(
+//                            getRegisteredClientRepository(http), getAuthorizationService(http)))
+//                    .authenticationProviders(
+//                        providers -> {
+//                          // AuthenticationProvider tmp = providers.get(0);
+//                          // providers.set(0, providers.get(1));
+//                          // providers.set(1, tmp);
 //                        }));
 //
-//        // redirecting unauthenticated requests to /oauth2 endpoints to the login page
-//        http.exceptionHandling(
-//                exceptionHandlingCustomizer -> exceptionHandlingCustomizer
-//                        .authenticationEntryPoint(new
-// LoginUrlAuthenticationEntryPoint("/login")));
+//    // redirecting unauthenticated requests to /oauth2 endpoints to the login page
+//    http.exceptionHandling(
+//        exceptionHandlingCustomizer ->
+//            exceptionHandlingCustomizer.authenticationEntryPoint(
+//                new LoginUrlAuthenticationEntryPoint("/login")));
 //
-//        return http.build();
-//    }
+//    return http.build();
+//  }
 //
-//    @Bean
-//    @Order(1)
-//    public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+//  @Bean
+//  @Order(1)
+//  public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
 //
-//        http.formLogin(formLoginCustomizer -> {
-//        });
+//    http.formLogin(formLoginCustomizer -> {});
 //
-//        http.authorizeHttpRequests(
-//                authorizeHttpRequestsCustomizer -> authorizeHttpRequestsCustomizer
-//                        .requestMatchers("/login.xhtml").permitAll()
-//                        .anyRequest().authenticated());
+//    http.authorizeHttpRequests(
+//        authorizeHttpRequestsCustomizer ->
+//            authorizeHttpRequestsCustomizer
+//                .requestMatchers("/login.xhtml")
+//                .permitAll()
+//                .anyRequest()
+//                .authenticated());
 //
-//        http.csrf(csrfCustomizer -> csrfCustomizer.disable());
+//    http.csrf(csrfCustomizer -> csrfCustomizer.disable());
 //
-//        return http.build();
-//    }
+//    return http.build();
+//  }
 //
-////    @Bean
-////    public OAuth2TokenCustomizer<OAuth2TokenClaimsContext> opaqueTokenCustomizer() {
-////        return context -> {
-////            if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
-////
-////                // sleep on the next line for a bit// you can use the AuthorityUtils class'
-////                // static methods
-////                Set<GrantedAuthority> principalGrantedAuthorities = new HashSet<>(
-////                        context.getPrincipal().getAuthorities());
-////
-////                Set<String> realmAccess = new HashSet<>();
-////
-////                for (GrantedAuthority ga : principalGrantedAuthorities) {
-////
-////                    String grantedAuthorityString = ga.getAuthority();
-////                    realmAccess.add(grantedAuthorityString);
-////
-////                }
-////
-////                context.getClaims().claims(claims -> {
-////                    claims.put("realm-access", realmAccess);
-////                });
-////            }
-////        };
-////    }
+//  //    @Bean
+//  //    public OAuth2TokenCustomizer<OAuth2TokenClaimsContext> opaqueTokenCustomizer() {
+//  //        return context -> {
+//  //            if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
+//  //
+//  //                // sleep on the next line for a bit// you can use the AuthorityUtils class'
+//  //                // static methods
+//  //                Set<GrantedAuthority> principalGrantedAuthorities = new HashSet<>(
+//  //                        context.getPrincipal().getAuthorities());
+//  //
+//  //                Set<String> realmAccess = new HashSet<>();
+//  //
+//  //                for (GrantedAuthority ga : principalGrantedAuthorities) {
+//  //
+//  //                    String grantedAuthorityString = ga.getAuthority();
+//  //                    realmAccess.add(grantedAuthorityString);
+//  //
+//  //                }
+//  //
+//  //                context.getClaims().claims(claims -> {
+//  //                    claims.put("realm-access", realmAccess);
+//  //                });
+//  //            }
+//  //        };
+//  //    }
 //
-//    @Bean
-//    public OAuth2TokenCustomizer<OAuth2TokenClaimsContext> opaqueTokenCustomizer() {
-//        return context -> {
-//            if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
+//  @Bean
+//  public OAuth2TokenCustomizer<OAuth2TokenClaimsContext> opaqueTokenCustomizer() {
+//    return context -> {
+//      if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
 //
-//                Set<GrantedAuthority> principalGrantedAuthorities = new HashSet<>(
-//                    context.getPrincipal().getAuthorities());
+//        Set<GrantedAuthority> principalGrantedAuthorities =
+//            new HashSet<>(context.getPrincipal().getAuthorities());
 //
-//                context.getClaims().claims(claims -> {
-//                    claims.put("realm-access", principalGrantedAuthorities);
+//        context
+//            .getClaims()
+//            .claims(
+//                claims -> {
+//                  claims.put("realm-access", principalGrantedAuthorities);
 //                });
-//            }
-//        };
-//    }
+//      }
+//    };
+//  }
 //
+//  @Bean
+//  public UserDetailsService userDetailsService() {
 //
-//
-//    @Bean
-//    public UserDetailsService userDetailsService() {
-//
-//        UserDetails user1 = User.withUsername("admin").password("admin").authorities("ROLE_ADMIN",
-// "DELETE_USER")
-//                .build();
-//        UserDetails user2 = User.withUsername("user").password("user")
-//                .authorities("ROLE_USER", "BORROW_BOOK", "/user/hello").build();
-//
-//        UserDetails admin9000 = User.withUsername("admin9000")
-//            .password("admin9000")
-//            .authorities(
-//                new EndPointBasedGrantedAuthority("ROLE_ADMIN",
-//                    EndPointBasedGrantedAuthority.getRoleEndPoints("ROLE_ADMIN")))
-//                    .build();
-//        UserDetails user9000 = User.withUsername("user9000")
-//            .password("user9000")
-//            .authorities(
-//                new EndPointBasedGrantedAuthority("ROLE_USER",
-//                    EndPointBasedGrantedAuthority.getRoleEndPoints("ROLE_USER")))
+//    UserDetails user1 =
+//        User.withUsername("admin")
+//            .password("admin")
+//            .authorities("ROLE_ADMIN", "DELETE_USER")
+//            .build();
+//    UserDetails user2 =
+//        User.withUsername("user")
+//            .password("user")
+//            .authorities("ROLE_USER", "BORROW_BOOK", "/user/hello")
 //            .build();
 //
-//        return new InMemoryUserDetailsManager(user1, user2, user9000, admin9000);
-//    }
+//    UserDetails admin9000 =
+//        User.withUsername("admin9000")
+//            .password("admin9000")
+//            .authorities(
+//                new EndPointBasedGrantedAuthority(
+//                    "ROLE_ADMIN", EndPointBasedGrantedAuthority.getRoleEndPoints("ROLE_ADMIN")))
+//            .build();
+//    UserDetails user9000 =
+//        User.withUsername("user9000")
+//            .password("user9000")
+//            .authorities(
+//                new EndPointBasedGrantedAuthority(
+//                    "ROLE_USER", EndPointBasedGrantedAuthority.getRoleEndPoints("ROLE_USER")))
+//            .build();
 //
-//    @Bean
-//    public PasswordEncoder passwordEncoder() {
-//        return NoOpPasswordEncoder.getInstance();
-//    }
+//    return new InMemoryUserDetailsManager(user1, user2, user9000, admin9000);
+//  }
 //
-//    @Bean
-//    public RegisteredClientRepository registeredClientRepository() {
+//  @Bean
+//  public PasswordEncoder passwordEncoder() {
+//    return NoOpPasswordEncoder.getInstance();
+//  }
 //
-//        RegisteredClient registeredClient1 = RegisteredClient.withId(UUID.randomUUID().toString())
-//                .clientId("client1_id")
-//                .clientSecret("client1_secret")
-//                // .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-//                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-//                .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-//                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
-//                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+//  @Bean
+//  public RegisteredClientRepository registeredClientRepository() {
 //
-// .tokenSettings(TokenSettings.builder().accessTokenFormat(OAuth2TokenFormat.REFERENCE).build())
-//                .clientName("private client")
-//                .redirectUri("http://localhost:8080/oauth2/code/authzcode.xhtml")
-//                .scope(OidcScopes.OPENID)
-//                .build();
-//        RegisteredClient registeredClient2 = RegisteredClient.withId(UUID.randomUUID().toString())
-//                .clientId("client2_id")
-//                .clientSecret("client2_secret")
-//                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-//                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-//                // .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-//                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
-//                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-//                .clientName("public client")
-//                .redirectUri("http://localhost:8080/oauth2/code/authzcode.xhtml")
-//                .scope(OidcScopes.OPENID)
-//                .clientSettings(ClientSettings.builder().requireProofKey(true).build())
-//
-// .tokenSettings(TokenSettings.builder().accessTokenFormat(OAuth2TokenFormat.REFERENCE).build())
-//                .build();
-//        RegisteredClient resourceServer9000 =
-// RegisteredClient.withId(UUID.randomUUID().toString())
-//                .clientId("resource9000")
-//                .clientSecret("resource9000")
-//                .clientName("resource9000")
-//                .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-//                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-//                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
-//
-// .tokenSettings(TokenSettings.builder().accessTokenFormat(OAuth2TokenFormat.REFERENCE).build())
-//                .build();
-//        RegisteredClient resourceServer9005 =
-// RegisteredClient.withId(UUID.randomUUID().toString())
+//    RegisteredClient registeredClient1 =
+//        RegisteredClient.withId(UUID.randomUUID().toString())
+//            .clientId("client1_id")
+//            .clientSecret("client1_secret")
+//            // .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+//            .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+//            .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+//            .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
+//            .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+//            .tokenSettings(
+//                TokenSettings.builder().accessTokenFormat(OAuth2TokenFormat.REFERENCE).build())
+//            .clientName("private client")
+//            .redirectUri("http://localhost:8080/oauth2/code/authzcode.xhtml")
+//            .scope(OidcScopes.OPENID)
+//            .build();
+//    RegisteredClient registeredClient2 =
+//        RegisteredClient.withId(UUID.randomUUID().toString())
+//            .clientId("client2_id")
+//            .clientSecret("client2_secret")
+//            .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+//            .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+//            // .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+//            .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
+//            .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+//            .clientName("public client")
+//            .redirectUri("http://localhost:8080/oauth2/code/authzcode.xhtml")
+//            .scope(OidcScopes.OPENID)
+//            .clientSettings(ClientSettings.builder().requireProofKey(true).build())
+//            .tokenSettings(
+//                TokenSettings.builder().accessTokenFormat(OAuth2TokenFormat.REFERENCE).build())
+//            .build();
+//    RegisteredClient resourceServer9000 =
+//        RegisteredClient.withId(UUID.randomUUID().toString())
+//            .clientId("resource9000")
+//            .clientSecret("resource9000")
+//            .clientName("resource9000")
+//            .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+//            .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+//            .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
+//            .tokenSettings(
+//                TokenSettings.builder().accessTokenFormat(OAuth2TokenFormat.REFERENCE).build())
+//            .build();
+//    RegisteredClient resourceServer9005 =
+//        RegisteredClient.withId(UUID.randomUUID().toString())
 //            .clientId("resource9005")
 //            .clientSecret("resource9005")
 //            .clientName("resource9005")
 //            .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
 //            .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 //            .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
-//
-// .tokenSettings(TokenSettings.builder().accessTokenFormat(OAuth2TokenFormat.REFERENCE).build())
+//            .tokenSettings(
+//                TokenSettings.builder().accessTokenFormat(OAuth2TokenFormat.REFERENCE).build())
 //            .build();
 //
-//        return new InMemoryRegisteredClientRepository(registeredClient1, registeredClient2,
-// resourceServer9000);
+//    return new InMemoryRegisteredClientRepository(
+//        registeredClient1, registeredClient2, resourceServer9000);
+//  }
+//
+//  @Bean
+//  public AuthorizationServerSettings authorizationServerSettings() {
+//    return AuthorizationServerSettings.builder().build();
+//  }
+//
+//  @Bean
+//  public JWKSource<SecurityContext> jwkSource() {
+//
+//    KeyPair keyPair = generateRsaKey();
+//
+//    RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
+//    RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
+//
+//    com.nimbusds.jose.jwk.RSAKey rsaKey =
+//        new com.nimbusds.jose.jwk.RSAKey.Builder(publicKey)
+//            .privateKey(privateKey)
+//            .keyID(UUID.randomUUID().toString())
+//            .build();
+//    JWKSet jwkSet = new JWKSet(rsaKey);
+//    return new ImmutableJWKSet<>(jwkSet);
+//  }
+//
+//  private static KeyPair generateRsaKey() {
+//    KeyPair keyPair;
+//    try {
+//      KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+//      keyPairGenerator.initialize(2048);
+//      keyPair = keyPairGenerator.generateKeyPair();
+//    } catch (Exception ex) {
+//      throw new IllegalStateException(ex);
 //    }
-//
-//    @Bean
-//    public AuthorizationServerSettings authorizationServerSettings() {
-//        return AuthorizationServerSettings.builder().build();
-//    }
-//
-//    @Bean
-//    public JWKSource<SecurityContext> jwkSource() {
-//
-//        KeyPair keyPair = generateRsaKey();
-//
-//        RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
-//        RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
-//
-//        com.nimbusds.jose.jwk.RSAKey rsaKey = new com.nimbusds.jose.jwk.RSAKey.Builder(publicKey)
-//                .privateKey(privateKey)
-//                .keyID(UUID.randomUUID().toString())
-//                .build();
-//        JWKSet jwkSet = new JWKSet(rsaKey);
-//        return new ImmutableJWKSet<>(jwkSet);
-//    }
-//
-//    private static KeyPair generateRsaKey() {
-//        KeyPair keyPair;
-//        try {
-//            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-//            keyPairGenerator.initialize(2048);
-//            keyPair = keyPairGenerator.generateKeyPair();
-//        } catch (Exception ex) {
-//            throw new IllegalStateException(ex);
-//        }
-//        return keyPair;
-//    }
+//    return keyPair;
+//  }
 // }

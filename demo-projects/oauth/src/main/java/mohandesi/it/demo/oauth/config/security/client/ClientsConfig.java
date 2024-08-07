@@ -40,8 +40,8 @@ public class ClientsConfig {
             .build();
     RegisteredClient resourceServer9000 =
         RegisteredClient.withId(UUID.randomUUID().toString())
-            .clientId("resource9000")
-            .clientSecret("resource9000")
+            .clientId("9000")
+            .clientSecret("9000")
             .clientName("resource9000")
             .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
             .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
@@ -51,8 +51,8 @@ public class ClientsConfig {
             .build();
     RegisteredClient resourceServer9005 =
         RegisteredClient.withId(UUID.randomUUID().toString())
-            .clientId("resource9005")
-            .clientSecret("resource9005")
+            .clientId("9005")
+            .clientSecret("9005")
             .clientName("resource9005")
             .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
             .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
